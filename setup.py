@@ -14,6 +14,7 @@ requires = [
     'pyramid_debugtoolbar',
     'waitress',
     'pyramid_mako', #new dependency
+    'exifread', #new dependency
     ]
 
 setup(name='raspistillWeb',
