@@ -25,6 +25,8 @@
             <dd>${exposure_mode}</dd>
             <dt>Image Effect</dt>
             <dd>${image_effect}</dd>
+            <dt>AWB Mode</dt>
+            <dd>${awb_mode}</dd>
           </dl>
         </div>
       </div>

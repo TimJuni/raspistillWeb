@@ -71,6 +71,20 @@
               </div>  
             </div>
             <div class="form-group">
+              <label for="awbMode1" class="col-lg-2 control-label">AWB Mode</label>
+              <div class="col-lg-10">
+                <select name="awbMode" class="form-control" id="awbMode1">             
+                  % for mode in awb_modes:
+                    % if mode == awb_mode:
+                      <option selected>${mode}</option>
+                    % else:
+                      <option>${mode}</option>
+                    % endif
+                  % endfor
+                </select>
+              </div>  
+            </div>
+            <div class="form-group">
               <div class="col-lg-offset-2 col-lg-10">
                 <button type="submit" class="btn btn-primary">Save</button>
               </div>

@@ -15,12 +15,16 @@ IMAGE_EFFECTS  = ['none','negative','solarise','sketch','denoise','emboss',
 
 EXPOSURE_MODES = ['off','auto','night','nightpreview','backlight','spotlight',
     'sports','snow','beach','verylong','fixedfps','antishake','fireworks']
+    
+AWB_MODES = ['off','auto','sun','cloud','shade','tungsten','fluorescent',
+    'incandescent','flash','horizon']
 
 # image parameter commands
 image_width = 800
 image_height = 600
 image_effect = 'none'
 exposure_mode = 'off'
+awb_mode = 'off'
 preferences_success_alert = False
 preferences_fail_alert = ""
 
@@ -55,8 +59,10 @@ def settings_view(request):
     return {'project' : 'raspistillWeb',
             'image_effect' : image_effect,
             'exposure_mode' : exposure_mode,
+            'awb_mode' : awb_mode,
             'image_effects' : IMAGE_EFFECTS,
             'exposure_modes' : EXPOSURE_MODES,
+            'awb_modes' : AWB_MODES,
             'image_width' : image_width,
             'image_height' : image_height,
             'preferences_success_alert' : preferences_success_alert_temp,
@@ -74,12 +80,13 @@ def home_view(request):
         'imagedata' : filedata + exif,
         'image_effect' : image_effect,
         'exposure_mode' : exposure_mode,
+        'awb_mode' : awb_mode,
         'image_url' : 'pictures/'+filename}
 
 # View for settings Form data - no site will be generated      
 @view_config(route_name='save')
 def save_view(request):
-    global exposure_mode, image_effect, preferences_success_alert, image_width, image_height, preferences_fail_alert
+    global exposure_mode, image_effect, preferences_success_alert, image_width, image_height, preferences_fail_alert, awb_mode
     image_width_temp = request.params['imageWidth']
     image_height_temp = request.params['imageHeight']
     
@@ -100,6 +107,7 @@ def save_view(request):
     
     exposure_mode = request.params['exposureMode']
     image_effect = request.params['imageEffect']
+    awb_mode = request.params['awbMode']
     return HTTPFound(location='/settings')  
 
 ###############################################################################
@@ -111,6 +119,7 @@ def take_photo(filename):
         + ' -w ' + str(image_width)
         + ' -h ' + str(image_height)
         + ' -ex ' + exposure_mode
+        + ' -awb ' + awb_mode
         + ' -ifx ' + image_effect 
         + ' -o ' + RASPISTILL_DIRECTORY + filename],shell=True)
     return
