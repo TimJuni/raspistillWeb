@@ -2,13 +2,15 @@
 
 Small Python web interface for raspistill to take photos with the RaspberryPi in the browser. I used the [pyramid framework](http://www.pylonsproject.org/) for site generation and [bootstrap](http://getbootstrap.com/) for fancy mobile-first layouts. 
 
-### Requirements
+![alt text](https://raw.github.com/TimJuni/raspistillWeb/master/raspistillweb/pictures/preview.jpg "raspistillWeb preview")
+
+## Requirements
 
 For a successful installation you need:
 * a RaspberryPi with [raspbian](http://www.raspbian.org) installed (other os not tested, but should work too)
 * a RaspberryPi Camera Kit
 
-### Installation Notes
+## Installation Notes
 
 I'll provide a guide to install raspistillWeb based on the tutorial from the [pyramid framework](http://docs.pylonsproject.org/projects/pyramid/en/1.4-branch/narr/install.html) to install raspistillWeb in a seperate python environment, so that your systems python environment is not effected.
 
@@ -32,5 +34,10 @@ I'll provide a guide to install raspistillWeb based on the tutorial from the [py
   * `../bin/pserve development.ini`
   * surf `http://<adress of your pi>:6543`
 
-### Future Work
+## Updates
+To update your Version of raspistillWeb, simply go into the raspistillWeb Directory and type:
+  * `git pull`
+  * `../bin/python setup.py develop`
+
+## Future Work
 This is my first project with python and pyramid. Feel free to leave a commend or a feature request.
