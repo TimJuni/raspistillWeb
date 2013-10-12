@@ -1,3 +1,19 @@
+# raspistillWeb - web interface for raspistill
+# Copyright (C) 2013 Tim Jungnickel
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see http://www.gnu.org/licenses/.
+
 from pyramid.config import Configurator
 
 
@@ -7,7 +23,6 @@ def main(global_config, **settings):
     config = Configurator(settings=settings)
     config.include('pyramid_chameleon')
     config.include('pyramid_mako')
-    #settings['mako.directories'] = os.path.join(here, 'templates')
     config.add_static_view('static', 'static', cache_max_age=3600)
     config.add_static_view('pictures', 'pictures', cache_max_age=3600)
     config.add_route('home','/')
