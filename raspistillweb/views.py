@@ -99,10 +99,12 @@ def home_view(request):
         'awb_mode' : awb_mode,
         'image_url' : 'pictures/'+filename}
 
-# View for settings Form data - no site will be generated      
+# View for settings form data - no site will be generated      
 @view_config(route_name='save')
 def save_view(request):
-    global exposure_mode, image_effect, preferences_success_alert, image_width, image_height, preferences_fail_alert, awb_mode
+    global exposure_mode, image_effect, preferences_success_alert, image_width, 
+        image_height, preferences_fail_alert, awb_mode
+    
     image_width_temp = request.params['imageWidth']
     image_height_temp = request.params['imageHeight']
     
@@ -119,7 +121,7 @@ def save_view(request):
             image_height = image_height_temp
         else:
             preferences_success_alert = False
-            preferences_fail_alert += ' Please enter an image width between 0 and 1500. '
+            preferences_fail_alert += ' Please enter an image height between 0 and 1500. '
     
     exposure_mode = request.params['exposureMode']
     image_effect = request.params['imageEffect']
@@ -127,7 +129,7 @@ def save_view(request):
     return HTTPFound(location='/settings')  
 
 ###############################################################################
-############ Helper functions to ceep the code clean ##########################
+############ Helper functions to keep the code clean ##########################
 ###############################################################################
 
 def take_photo(filename):
