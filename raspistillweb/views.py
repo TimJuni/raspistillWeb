@@ -111,8 +111,8 @@ def home_view(request):
 # View for settings form data - no site will be generated      
 @view_config(route_name='save')
 def save_view(request):
-    global exposure_mode, image_effect, preferences_success_alert, image_width,
-        image_height, preferences_fail_alert, awb_mode
+    global exposure_mode, image_effect, preferences_success_alert, image_width
+    global image_height, preferences_fail_alert, awb_mode
 
     image_width_temp = request.params['imageWidth']
     image_height_temp = request.params['imageHeight']
@@ -123,16 +123,14 @@ def save_view(request):
             image_width = image_width_temp
         else:
             preferences_success_alert = False
-            preferences_fail_alert += ' Please enter an image width between 0 
-                and 2500. '
+            preferences_fail_alert += ' Please enter an image width between 0 and 2500. '
     
     if image_height_temp:
         if 0 < int(image_height_temp) < 1500:
             image_height = image_height_temp
         else:
             preferences_success_alert = False
-            preferences_fail_alert += ' Please enter an image height between 0 
-                and 1500. '
+            preferences_fail_alert += ' Please enter an image height between 0 and 1500. '
     
     exposure_mode = request.params['exposureMode']
     image_effect = request.params['imageEffect']
