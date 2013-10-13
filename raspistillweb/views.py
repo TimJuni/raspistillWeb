@@ -25,15 +25,22 @@ from stat import *
 
 RASPISTILL_DIRECTORY = 'raspistillweb/pictures/'
 
-IMAGE_EFFECTS  = ['none','negative','solarise','sketch','denoise','emboss',
-    'oilpaint','hatch','gpen','pastel','watercolour','film','blur','saturation',
-    'colourswap','washedout','posterise','colourpoint','colourbalance','cartoon']
+IMAGE_EFFECTS = [
+    'none', 'negative', 'solarise', 'sketch', 'denoise', 'emboss', 'oilpaint', 
+    'hatch', 'gpen', 'pastel', 'watercolour', 'film', 'blur', 'saturation', 
+    'colourswap', 'washedout', 'posterise', 'colourpoint', 'colourbalance', 
+    'cartoon'
+    ]
 
-EXPOSURE_MODES = ['off','auto','night','nightpreview','backlight','spotlight',
-    'sports','snow','beach','verylong','fixedfps','antishake','fireworks']
+EXPOSURE_MODES = [
+    'off', 'auto', 'night', 'nightpreview', 'backlight', 'spotlight', 'sports',
+    'snow', 'beach', 'verylong', 'fixedfps', 'antishake', 'fireworks'
+    ]
     
-AWB_MODES = ['off','auto','sun','cloud','shade','tungsten','fluorescent',
-    'incandescent','flash','horizon']
+AWB_MODES = [
+    'off', 'auto', 'sun', 'cloud', 'shade', 'tungsten', 'fluorescent',
+    'incandescent', 'flash', 'horizon'
+    ]
 
 # image parameter commands
 image_width = 800
@@ -82,7 +89,8 @@ def settings_view(request):
             'image_width' : image_width,
             'image_height' : image_height,
             'preferences_success_alert' : preferences_success_alert_temp,
-            'preferences_fail_alert' : preferences_fail_alert_temp} 
+            'preferences_fail_alert' : preferences_fail_alert_temp
+            } 
                     
 # View for the / site
 @view_config(route_name='home', renderer='home.mako')
@@ -93,33 +101,37 @@ def home_view(request):
     exif = extract_exif(exifread.process_file(f))    
     filedata = extract_filedata(os.stat(RASPISTILL_DIRECTORY + filename))       
     return {'project': 'raspistillWeb',
-        'imagedata' : filedata + exif,
-        'image_effect' : image_effect,
-        'exposure_mode' : exposure_mode,
-        'awb_mode' : awb_mode,
-        'image_url' : 'pictures/'+filename}
+            'imagedata' : filedata + exif,
+            'image_effect' : image_effect,
+            'exposure_mode' : exposure_mode,
+            'awb_mode' : awb_mode,
+            'image_url' : 'pictures/'+filename
+            }
 
 # View for settings Form data - no site will be generated      
 @view_config(route_name='save')
 def save_view(request):
-    global exposure_mode, image_effect, preferences_success_alert, image_width, image_height, preferences_fail_alert, awb_mode
+    global exposure_mode, image_effect, preferences_success_alert, image_width,
+        image_height, preferences_fail_alert, awb_mode
     image_width_temp = request.params['imageWidth']
     image_height_temp = request.params['imageHeight']
     
     preferences_success_alert = True
     if image_width_temp:
-        if 0 < int(image_width_temp) < 2500 :
+        if 0 < int(image_width_temp) < 2500:
             image_width = image_width_temp
         else:
             preferences_success_alert = False
-            preferences_fail_alert += ' Please enter an image width between 0 and 2500. '
+            preferences_fail_alert += ' Please enter an image width between 0 
+                and 2500. '
     
     if image_height_temp:
-        if 0 < int(image_height_temp) < 1500 :
+        if 0 < int(image_height_temp) < 1500:
             image_height = image_height_temp
         else:
             preferences_success_alert = False
-            preferences_fail_alert += ' Please enter an image width between 0 and 1500. '
+            preferences_fail_alert += ' Please enter an height width between 0 
+                and 1500. '
     
     exposure_mode = request.params['exposureMode']
     image_effect = request.params['imageEffect']
@@ -127,30 +139,33 @@ def save_view(request):
     return HTTPFound(location='/settings')  
 
 ###############################################################################
-############ Helper functions to ceep the code clean ##########################
+############ Helper functions to keep the code clean ##########################
 ###############################################################################
 
 def take_photo(filename):
-    call (['raspistill -t 0'
+    call (
+        ['raspistill -t 0'
         + ' -w ' + str(image_width)
         + ' -h ' + str(image_height)
         + ' -ex ' + exposure_mode
         + ' -awb ' + awb_mode
         + ' -ifx ' + image_effect 
-        + ' -o ' + RASPISTILL_DIRECTORY + filename],shell=True)
+        + ' -o ' + RASPISTILL_DIRECTORY + filename], shell=True
+        )
     return
 
 def extract_exif(tags):
     return [
-        {'key' : 'Image Resolution', 'value' : str(tags['Image ImageWidth']) 
+        {'key': 'Image Resolution', 'value': str(tags['Image ImageWidth']) 
         + ' x ' + str(tags['Image ImageLength'])},
-        {'key' : 'ISO', 'value' : str(tags['EXIF ISOSpeedRatings'])},
-        {'key' : 'Exposure Time', 'value' : str(tags['EXIF ExposureTime'])}
+        {'key': 'ISO', 'value': str(tags['EXIF ISOSpeedRatings'])},
+        {'key': 'Exposure Time', 'value': str(tags['EXIF ExposureTime'])}
         ]
     
 def extract_filedata(st):
     return[
-        {'key' : 'Date' , 'value' : str(time.asctime(time.localtime(st[ST_MTIME])))},
-        {'key' : 'Filesize', 'value' : str((st[ST_SIZE])/1000) + ' kB'}
-    ]    
+        {'key': 'Date', 'value': 
+        str(time.asctime(time.localtime(st[ST_MTIME])))},
+        {'key': 'Filesize', 'value': str((st[ST_SIZE])/1000) + ' kB'}
+        ]    
 
