@@ -41,6 +41,9 @@ AWB_MODES = [
     'off', 'auto', 'sun', 'cloud', 'shade', 'tungsten', 'fluorescent',
     'incandescent', 'flash', 'horizon'
     ]
+    
+IMAGE_HEIGHT_ALERT = 'Please enter an image height between 0 and 1500.'
+IMAGE_WIDTH_ALERT = 'Please enter an image width between 0 and 2500.'
 
 # image parameter commands
 image_width = 800
@@ -49,7 +52,7 @@ image_effect = 'none'
 exposure_mode = 'off'
 awb_mode = 'off'
 preferences_success_alert = False
-preferences_fail_alert = ""
+preferences_fail_alert = []
 
 # not implemented yet
 image_quality = '100'
@@ -70,14 +73,14 @@ def settings_view(request):
     global preferences_success_alert, preferences_fail_alert
     
     preferences_success_alert_temp = False
-    if preferences_success_alert:
+    if preferences_success_alert is True:
         preferences_success_alert_temp = True
         preferences_success_alert = False
         
-    preferences_fail_alert_temp = ""    
-    if preferences_fail_alert:
+    preferences_fail_alert_temp = []    
+    if preferences_fail_alert is not []:
         preferences_fail_alert_temp = preferences_fail_alert
-        preferences_fail_alert = ""
+        preferences_fail_alert = []
         
     return {'project' : 'raspistillWeb',
             'image_effect' : image_effect,
@@ -123,14 +126,14 @@ def save_view(request):
             image_width = image_width_temp
         else:
             preferences_success_alert = False
-            preferences_fail_alert += ' Please enter an image width between 0 and 2500. '
+            preferences_fail_alert.append(IMAGE_WIDTH_ALERT)
     
     if image_height_temp:
         if 0 < int(image_height_temp) < 1500:
             image_height = image_height_temp
         else:
             preferences_success_alert = False
-            preferences_fail_alert += ' Please enter an image height between 0 and 1500. '
+            preferences_fail_alert.append(IMAGE_HEIGHT_ALERT)
     
     exposure_mode = request.params['exposureMode']
     image_effect = request.params['imageEffect']
