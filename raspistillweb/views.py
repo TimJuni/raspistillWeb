@@ -42,8 +42,8 @@ AWB_MODES = [
     'incandescent', 'flash', 'horizon'
     ]
     
-IMAGE_HEIGHT_ALERT = 'Please enter an image height between 0 and 1500.'
-IMAGE_WIDTH_ALERT = 'Please enter an image width between 0 and 2500.'
+IMAGE_HEIGHT_ALERT = 'Please enter an image height between 0 and 1945.'
+IMAGE_WIDTH_ALERT = 'Please enter an image width between 0 and 2593.'
 
 # image parameter commands
 image_width = 800
@@ -122,14 +122,14 @@ def save_view(request):
     
     preferences_success_alert = True
     if image_width_temp:
-        if 0 < int(image_width_temp) < 2500:
+        if 0 < int(image_width_temp) < 2593:
             image_width = image_width_temp
         else:
             preferences_success_alert = False
             preferences_fail_alert.append(IMAGE_WIDTH_ALERT)
     
     if image_height_temp:
-        if 0 < int(image_height_temp) < 1500:
+        if 0 < int(image_height_temp) < 1945:
             image_height = image_height_temp
         else:
             preferences_success_alert = False
