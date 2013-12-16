@@ -33,7 +33,7 @@ IMAGE_EFFECTS = [
     ]
 
 EXPOSURE_MODES = [
-    'off', 'auto', 'night', 'nightpreview', 'backlight', 'spotlight', 'sports',
+    'auto', 'night', 'nightpreview', 'backlight', 'spotlight', 'sports',
     'snow', 'beach', 'verylong', 'fixedfps', 'antishake', 'fireworks'
     ]
     
@@ -49,7 +49,7 @@ IMAGE_WIDTH_ALERT = 'Please enter an image width between 0 and 2593.'
 image_width = 800
 image_height = 600
 image_effect = 'none'
-exposure_mode = 'off'
+exposure_mode = 'auto'
 awb_mode = 'off'
 preferences_success_alert = False
 preferences_fail_alert = []
@@ -146,7 +146,7 @@ def save_view(request):
 
 def take_photo(filename):
     call (
-        ['raspistill -t 0'
+        ['raspistill -t 500'
         + ' -w ' + str(image_width)
         + ' -h ' + str(image_height)
         + ' -ex ' + exposure_mode
