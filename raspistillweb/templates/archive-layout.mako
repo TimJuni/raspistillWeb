@@ -22,9 +22,9 @@
         </div>
         <div class="navbar-collapse collapse" style="height: 1px;">
           <ul class="nav navbar-nav">
-            <li class="active"><a href="/">Home</a></li>
+            <li><a href="/">Home</a></li>
             <li><a href="/settings">Settings</a></li>
-            <li><a href="/archive">Archive</a></li>
+            <li class="active"><a href="/archive">Archive</a></li>
           </ul>
           <ul class="nav navbar-nav navbar-right">
             <li>

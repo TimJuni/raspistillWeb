@@ -17,10 +17,16 @@
         </div>
         <div class="panel-body">
           <dl>
-            % for data in imagedata:
-            <dt>${data['key']}</dt>
-            <dd>${data['value']}</dd>
-            % endfor
+            <dt>Date</dt>
+            <dd>${imagedata['date']}</dd>
+            <dt>Filesize</dt>
+            <dd>${imagedata['filesize']}</dd>
+            <dt>Image Resolution</dt>
+            <dd>${imagedata['resolution']}</dd>
+            <dt>ISO</dt>
+            <dd>${imagedata['ISO']}</dd>
+            <dt>Exposure Time</dt>
+            <dd>${imagedata['exposure_time']}</dd>
             <dt>Image Exposure Mode</dt>
             <dd>${exposure_mode}</dd>
             <dt>Image Effect</dt>

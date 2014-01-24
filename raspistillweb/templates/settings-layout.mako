@@ -24,6 +24,7 @@
           <ul class="nav navbar-nav">
             <li><a href="/">Home</a></li>
             <li class="active"><a href="/settings">Settings</a></li>
+            <li><a href="/archive">Archive</a></li>
           </ul>
           <ul class="nav navbar-nav navbar-right">
             <li>

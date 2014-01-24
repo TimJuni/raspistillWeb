@@ -19,11 +19,14 @@ from pyramid.httpexceptions import HTTPFound
 import time
 import exifread
 import os
+#sys probalby not needed TODO
+import sys
 from subprocess import call
 from time import gmtime, strftime
 from stat import *
 
 RASPISTILL_DIRECTORY = 'raspistillweb/pictures/'
+THUMBNAIL_DIRECTORY = 'raspistillweb/thumbnails/'
 
 IMAGE_EFFECTS = [
     'none', 'negative', 'solarise', 'sketch', 'denoise', 'emboss', 'oilpaint', 
@@ -44,6 +47,10 @@ AWB_MODES = [
     
 IMAGE_HEIGHT_ALERT = 'Please enter an image height between 0 and 1945.'
 IMAGE_WIDTH_ALERT = 'Please enter an image width between 0 and 2593.'
+
+THUMBNAIL_SIZE = '240:160:80'
+
+database = []
 
 # image parameter commands
 image_width = 800
@@ -94,17 +101,28 @@ def settings_view(request):
             'preferences_success_alert' : preferences_success_alert_temp,
             'preferences_fail_alert' : preferences_fail_alert_temp
             } 
+            
+# View for the /archive site
+@view_config(route_name='archive', renderer='archive.mako')
+def archive_view(request):
+    return {'project' : 'raspistillWeb',
+            'database' : database
+            }
                     
 # View for the / site
 @view_config(route_name='home', renderer='home.mako')
 def home_view(request):
+    global database
     filename = strftime("%Y-%m-%d.%H.%M.%S.jpg", gmtime())
     take_photo(filename)        
     f = open(RASPISTILL_DIRECTORY + filename,'rb')
     exif = extract_exif(exifread.process_file(f))    
-    filedata = extract_filedata(os.stat(RASPISTILL_DIRECTORY + filename))       
+    filedata = extract_filedata(os.stat(RASPISTILL_DIRECTORY + filename))  
+    imagedata = dict(filedata.items() + exif.items())
+    imagedata['filename'] = filename
+    database.append(imagedata)     
     return {'project': 'raspistillWeb',
-            'imagedata' : filedata + exif,
+            'imagedata' : imagedata,
             'image_effect' : image_effect,
             'exposure_mode' : exposure_mode,
             'awb_mode' : awb_mode,
@@ -151,23 +169,33 @@ def take_photo(filename):
         + ' -h ' + str(image_height)
         + ' -ex ' + exposure_mode
         + ' -awb ' + awb_mode
-        + ' -ifx ' + image_effect 
+        + ' -ifx ' + image_effect
+        + ' -th ' + THUMBNAIL_SIZE 
         + ' -o ' + RASPISTILL_DIRECTORY + filename], shell=True
         )
+    generate_thumbnail(filename)
+    return
+
+def generate_thumbnail(filename):
+    call (
+        ['exif -e ' + RASPISTILL_DIRECTORY + filename
+        + ' -o ' + THUMBNAIL_DIRECTORY + filename], shell=True
+    )
     return
 
 def extract_exif(tags):
-    return [
-        {'key': 'Image Resolution', 'value': str(tags['Image ImageWidth']) 
-        + ' x ' + str(tags['Image ImageLength'])},
-        {'key': 'ISO', 'value': str(tags['EXIF ISOSpeedRatings'])},
-        {'key': 'Exposure Time', 'value': str(tags['EXIF ExposureTime'])}
-        ]
+    return {
+        'resolution' : str(tags['Image ImageWidth']) 
+        + ' x ' + str(tags['Image ImageLength']),
+        'ISO' : str(tags['EXIF ISOSpeedRatings']),
+        'exposure_time' : str(tags['EXIF ExposureTime'])
+            }
+        
     
 def extract_filedata(st):
-    return[
-        {'key': 'Date', 'value': 
-        str(time.asctime(time.localtime(st[ST_MTIME])))},
-        {'key': 'Filesize', 'value': str((st[ST_SIZE])/1000) + ' kB'}
-        ]    
+    return {
+        'date' : str(time.asctime(time.localtime(st[ST_MTIME]))),
+        'filesize': str((st[ST_SIZE])/1000) + ' kB'
+            }
+            
 

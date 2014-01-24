@@ -17,7 +17,7 @@ I'll provide a guide to install raspistillWeb based on the tutorial from the [py
 1. Make sure that your raspbian and you camera is working. Try to make a photo with raspistill to verify that your camera is working. 
 
 2. Install python2.7-dev (if not already on your system), virtualenv and setuptools:
-  * `sudo apt-get install python2.7-dev python-virtualenv python-setuptools`
+  * `sudo apt-get install python2.7-dev python-virtualenv python-setuptools exif`
 
 3. Create a virtual environment for python (sudo not required and not recommended):
   * `mkdir ~/Development` (Or another directory)
@@ -38,6 +38,7 @@ I'll provide a guide to install raspistillWeb based on the tutorial from the [py
 To update your Version of raspistillWeb, simply go into the raspistillWeb Directory and type:
   * `git pull`
   * `../bin/python setup.py develop`
+Please notice, that you may need to install new dependencies (for example exif via apt-get)
 
 ## Future Work
 This is my first project with python and pyramid. Feel free to leave a commend or a feature request.
