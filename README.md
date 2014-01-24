@@ -38,6 +38,7 @@ I'll provide a guide to install raspistillWeb based on the tutorial from the [py
 To update your Version of raspistillWeb, simply go into the raspistillWeb Directory and type:
   * `git pull`
   * `../bin/python setup.py develop`
+
 Please notice, that you may need to install new dependencies (for example exif via apt-get)
 
 ## Future Work
