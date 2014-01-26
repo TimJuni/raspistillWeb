@@ -5,8 +5,8 @@
   <div class="row">
     <div class="col-md-8">
       <div class="well">
-        <a href="${image_url}">
-          <img src="${image_url}" class="img-responsive">
+        <a href="${request.static_url('raspistillweb:pictures/')}${imagedata['filename']}">
+          <img src="${request.static_url('raspistillweb:pictures/')}${imagedata['filename']}" class="img-responsive">
         </a>
       </div>
     </div>
@@ -28,11 +28,11 @@
             <dt>Exposure Time</dt>
             <dd>${imagedata['exposure_time']}</dd>
             <dt>Image Exposure Mode</dt>
-            <dd>${exposure_mode}</dd>
+            <dd>${imagedata['exposure_mode']}</dd>
             <dt>Image Effect</dt>
-            <dd>${image_effect}</dd>
+            <dd>${imagedata['image_effect']}</dd>
             <dt>AWB Mode</dt>
-            <dd>${awb_mode}</dd>
+            <dd>${imagedata['awb_mode']}</dd>
           </dl>
         </div>
       </div>

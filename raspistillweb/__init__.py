@@ -29,6 +29,8 @@ def main(global_config, **settings):
     config.add_route('home','/')
     config.add_route('settings','/settings')
     config.add_route('save','/save')
+    config.add_route('delete','/delete')
     config.add_route('archive','/archive')
+    config.add_route('photo','/photo')
     config.scan()
     return config.make_wsgi_app()

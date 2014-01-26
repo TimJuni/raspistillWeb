@@ -6,7 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="${request.static_url('raspistillweb:static/css/bootstrap.css')}" rel="stylesheet" media="screen">
     <link href="${request.static_url('raspistillweb:static/css/bootstrap-responsive.css')}" rel="stylesheet">
-    
   </head>
   <body>
 
@@ -29,7 +28,7 @@
           <ul class="nav navbar-nav navbar-right">
             <li>
               <form method="post">
-                <input type="button" class="btn btn-danger navbar-btn" value="Take Photo" onclick="location.href='/'">
+                <input type="button" class="btn btn-danger navbar-btn" value="Take Photo" onclick="location.href='/photo'">
               </form>
             </li>
           </ul>

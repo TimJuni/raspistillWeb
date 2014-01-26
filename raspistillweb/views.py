@@ -112,22 +112,38 @@ def archive_view(request):
 # View for the / site
 @view_config(route_name='home', renderer='home.mako')
 def home_view(request):
+    if database == []:
+        return HTTPFound(location='/photo') 
+    else: 
+        return {'project': 'raspistillWeb',
+                'imagedata' : database[0]
+                }
+
+# View to take a photo - no site will be generated
+@view_config(route_name='photo')
+def photo_view(request):
     global database
     filename = strftime("%Y-%m-%d.%H.%M.%S.jpg", gmtime())
-    take_photo(filename)        
+    take_photo(filename)
     f = open(RASPISTILL_DIRECTORY + filename,'rb')
     exif = extract_exif(exifread.process_file(f))    
     filedata = extract_filedata(os.stat(RASPISTILL_DIRECTORY + filename))  
     imagedata = dict(filedata.items() + exif.items())
     imagedata['filename'] = filename
-    database.append(imagedata)     
-    return {'project': 'raspistillWeb',
-            'imagedata' : imagedata,
-            'image_effect' : image_effect,
-            'exposure_mode' : exposure_mode,
-            'awb_mode' : awb_mode,
-            'image_url' : 'pictures/'+filename
-            }
+    imagedata['image_effect'] = image_effect
+    imagedata['exposure_mode'] = exposure_mode
+    imagedata['awb_mode'] = awb_mode
+    imagedata['photo_dir'] = RASPISTILL_DIRECTORY
+    imagedata['thumbnail_dir'] = THUMBNAIL_DIRECTORY
+    database.insert(0,imagedata)
+    return HTTPFound(location='/')  
+         
+# View for the archive delete - no site will be generated
+@view_config(route_name='delete')
+def delete_view(request):
+    global database
+    database.pop(int(request.params['id']))
+    return HTTPFound(location='/archive')  
 
 # View for settings form data - no site will be generated      
 @view_config(route_name='save')

@@ -29,7 +29,7 @@
           <ul class="nav navbar-nav navbar-right">
             <li>
               <form method="post">
-                <input type="button" class="btn btn-danger navbar-btn" value="Take Photo" onclick="location.href='/'">
+                <input type="button" class="btn btn-danger navbar-btn" value="Take Photo" onclick="location.href='/photo'">
               </form>
             </li>
           </ul>
