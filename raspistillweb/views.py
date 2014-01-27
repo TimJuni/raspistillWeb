@@ -133,8 +133,6 @@ def photo_view(request):
     imagedata['image_effect'] = image_effect
     imagedata['exposure_mode'] = exposure_mode
     imagedata['awb_mode'] = awb_mode
-    imagedata['photo_dir'] = RASPISTILL_DIRECTORY
-    imagedata['thumbnail_dir'] = THUMBNAIL_DIRECTORY
     database.insert(0,imagedata)
     return HTTPFound(location='/')  
          
@@ -189,6 +187,9 @@ def take_photo(filename):
         + ' -th ' + THUMBNAIL_SIZE 
         + ' -o ' + RASPISTILL_DIRECTORY + filename], shell=True
         )
+    #call (
+    #    ['ln -s ' + RASPISTILL_DIRECTORY + filename + ' raspistillweb/pictures/' + filename], shell=True
+    #    )
     generate_thumbnail(filename)
     return
 
@@ -197,6 +198,9 @@ def generate_thumbnail(filename):
         ['exif -e ' + RASPISTILL_DIRECTORY + filename
         + ' -o ' + THUMBNAIL_DIRECTORY + filename], shell=True
     )
+    #call (
+    #    ['ln -s ' + THUMBNAIL_DIRECTORY + filename + ' raspistillweb/thumbnails/' + filename], shell=True
+    #)
     return
 
 def extract_exif(tags):
