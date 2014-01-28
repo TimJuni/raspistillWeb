@@ -7,7 +7,7 @@
       <div class="col-md-10 col-md-offset-1">
         <div class="alert alert-success alert-dismissable">
           <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
-          <strong>Success!</strong> Settings saved. Please follow <a href="/" class="alert-link">this link</a> to take a photo.
+          <strong>Success!</strong> Settings saved. Please follow <a href="/photo" class="alert-link">this link</a> to take a photo.
         </div>
       </div>
     </div>

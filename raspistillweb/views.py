@@ -16,17 +16,19 @@
 
 from pyramid.view import view_config
 from pyramid.httpexceptions import HTTPFound
-import time
 import exifread
 import os
-#sys probalby not needed TODO
-import sys
 from subprocess import call
-from time import gmtime, strftime
+from time import gmtime, strftime, localtime, asctime
 from stat import *
+from datetime import *
 
-RASPISTILL_DIRECTORY = 'raspistillweb/pictures/'
-THUMBNAIL_DIRECTORY = 'raspistillweb/thumbnails/'
+
+# Modify these lines to change the directory where the pictures and thumbnails
+# are stored. Make sure that the directories exist and the user who runs this
+# program has write access to the directories. 
+RASPISTILL_DIRECTORY = 'raspistillweb/pictures/' # Example: /home/pi/pics/
+THUMBNAIL_DIRECTORY = 'raspistillweb/thumbnails/' # Example: /home/pi/thumbs/
 
 IMAGE_EFFECTS = [
     'none', 'negative', 'solarise', 'sketch', 'denoise', 'emboss', 'oilpaint', 
@@ -114,7 +116,9 @@ def archive_view(request):
 def home_view(request):
     if database == []:
         return HTTPFound(location='/photo') 
-    else: 
+    elif database[0]['timestamp'] > date.today()-timedelta(minutes=30): 
+        return HTTPFound(location='/photo') 
+    else:
         return {'project': 'raspistillWeb',
                 'imagedata' : database[0]
                 }
@@ -123,7 +127,7 @@ def home_view(request):
 @view_config(route_name='photo')
 def photo_view(request):
     global database
-    filename = strftime("%Y-%m-%d.%H.%M.%S.jpg", gmtime())
+    filename = strftime("%Y-%m-%d.%H.%M.%S.jpg", localtime())
     take_photo(filename)
     f = open(RASPISTILL_DIRECTORY + filename,'rb')
     exif = extract_exif(exifread.process_file(f))    
@@ -187,9 +191,11 @@ def take_photo(filename):
         + ' -th ' + THUMBNAIL_SIZE 
         + ' -o ' + RASPISTILL_DIRECTORY + filename], shell=True
         )
-    #call (
-    #    ['ln -s ' + RASPISTILL_DIRECTORY + filename + ' raspistillweb/pictures/' + filename], shell=True
-    #    )
+    if not (RASPISTILL_DIRECTORY == 'raspistillweb/pictures/'):
+        call (
+            ['ln -s ' + RASPISTILL_DIRECTORY + filename
+            + ' raspistillweb/pictures/' + filename], shell=True
+            )
     generate_thumbnail(filename)
     return
 
@@ -198,9 +204,11 @@ def generate_thumbnail(filename):
         ['exif -e ' + RASPISTILL_DIRECTORY + filename
         + ' -o ' + THUMBNAIL_DIRECTORY + filename], shell=True
     )
-    #call (
-    #    ['ln -s ' + THUMBNAIL_DIRECTORY + filename + ' raspistillweb/thumbnails/' + filename], shell=True
-    #)
+    if not (THUMBNAIL_DIRECTORY == 'raspistillweb/thumbnails/'):
+        call (
+            ['ln -s ' + THUMBNAIL_DIRECTORY + filename 
+            + ' raspistillweb/thumbnails/' + filename], shell=True
+            )
     return
 
 def extract_exif(tags):
@@ -214,7 +222,8 @@ def extract_exif(tags):
     
 def extract_filedata(st):
     return {
-        'date' : str(time.asctime(time.localtime(st[ST_MTIME]))),
+        'date' : str(asctime(localtime(st[ST_MTIME]))),
+        'timestamp' : date.today(),
         'filesize': str((st[ST_SIZE])/1000) + ' kB'
             }
             
