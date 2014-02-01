@@ -14,7 +14,7 @@ For a successful installation you need:
 
 I'll provide a guide to install raspistillWeb based on the tutorial from the [pyramid framework](http://docs.pylonsproject.org/projects/pyramid/en/1.4-branch/narr/install.html) to install raspistillWeb in a seperate python environment, so that your systems python environment is not effected.
 
-1. Make sure that your raspbian and you camera is working. Try to make a photo with raspistill to verify that your camera is working. 
+1. Make sure that your raspbian and your camera is working. Try to make a photo with raspistill to verify that your camera is working. 
 
 2. Install python2.7-dev (if not already on your system), virtualenv and setuptools:
   * `sudo apt-get install python2.7-dev python-virtualenv python-setuptools exif`
