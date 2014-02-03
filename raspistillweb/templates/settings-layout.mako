@@ -25,6 +25,7 @@
             <li><a href="/">Home</a></li>
             <li class="active"><a href="/settings">Settings</a></li>
             <li><a href="/archive">Archive</a></li>
+            <li><a href="/timelapse">Time Lapse</a></li>
           </ul>
           <ul class="nav navbar-nav navbar-right">
             <li>

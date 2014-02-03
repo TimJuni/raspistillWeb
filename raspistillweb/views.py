@@ -18,8 +18,10 @@ from pyramid.view import view_config
 from pyramid.httpexceptions import HTTPFound
 import exifread
 import os
+import thread
+import tarfile
 from subprocess import call
-from time import gmtime, strftime, localtime, asctime
+from time import gmtime, strftime, localtime, asctime, mktime
 from stat import *
 from datetime import *
 
@@ -29,6 +31,7 @@ from datetime import *
 # program has write access to the directories. 
 RASPISTILL_DIRECTORY = 'raspistillweb/pictures/' # Example: /home/pi/pics/
 THUMBNAIL_DIRECTORY = 'raspistillweb/thumbnails/' # Example: /home/pi/thumbs/
+TIMELAPSE_DIRECTORY = 'raspistillweb/time-lapse/'
 
 IMAGE_EFFECTS = [
     'none', 'negative', 'solarise', 'sketch', 'denoise', 'emboss', 'oilpaint', 
@@ -53,6 +56,12 @@ IMAGE_WIDTH_ALERT = 'Please enter an image width between 0 and 2593.'
 THUMBNAIL_SIZE = '240:160:80'
 
 database = []
+timelapse_database = []
+
+timelapse = False
+
+preferences_success_alert = False
+preferences_fail_alert = []
 
 # image parameter commands
 image_width = 800
@@ -60,8 +69,8 @@ image_height = 600
 image_effect = 'none'
 exposure_mode = 'auto'
 awb_mode = 'off'
-preferences_success_alert = False
-preferences_fail_alert = []
+timelapse_interval = 4000
+timelapse_time = 20000
 
 # not implemented yet
 image_quality = '100'
@@ -100,6 +109,8 @@ def settings_view(request):
             'awb_modes' : AWB_MODES,
             'image_width' : image_width,
             'image_height' : image_height,
+            'timelapse_interval' : timelapse_interval,
+            'timelapse_time' : timelapse_time,
             'preferences_success_alert' : preferences_success_alert_temp,
             'preferences_fail_alert' : preferences_fail_alert_temp
             } 
@@ -115,46 +126,78 @@ def archive_view(request):
 @view_config(route_name='home', renderer='home.mako')
 def home_view(request):
     if database == []:
-        return HTTPFound(location='/photo') 
-    elif database[0]['timestamp'] > date.today()-timedelta(minutes=30): 
+        return HTTPFound(location='/photo')
+    elif timelapse:
+        return {'project': 'raspistillWeb',
+                'imagedata' : database[0],
+                'timelapse' : timelapse,
+                }
+    elif (mktime(localtime()) - mktime(database[0]['timestamp'])) > 1800: 
         return HTTPFound(location='/photo') 
     else:
         return {'project': 'raspistillWeb',
-                'imagedata' : database[0]
+                'imagedata' : database[0],
+                'timelapse' : timelapse,
                 }
+
+# View for the /timelapse site        
+@view_config(route_name='timelapse', renderer='timelapse.mako')
+def timelapse_view(request):
+    return {'project': 'raspistillWeb',
+            'timelapse' : timelapse,
+            'timelapseInterval' : timelapse_interval,
+            'timelapseTime' : timelapse_time,
+            'timelapseDatabase' : timelapse_database
+            }
+            
+# View for the timelapse start - no site will be generated
+@view_config(route_name='timelapse_start')
+def timelapse_start_view(request):
+    global timelapse
+    timelapse = True
+    filename = strftime("%Y-%m-%d.%H.%M.%S", localtime())
+    thread.start_new_thread( take_timelapse, (filename, ) )
+    return HTTPFound(location='/timelapse') 
+
 
 # View to take a photo - no site will be generated
 @view_config(route_name='photo')
 def photo_view(request):
     global database
-    filename = strftime("%Y-%m-%d.%H.%M.%S.jpg", localtime())
-    take_photo(filename)
-    f = open(RASPISTILL_DIRECTORY + filename,'rb')
-    exif = extract_exif(exifread.process_file(f))    
-    filedata = extract_filedata(os.stat(RASPISTILL_DIRECTORY + filename))  
-    imagedata = dict(filedata.items() + exif.items())
-    imagedata['filename'] = filename
-    imagedata['image_effect'] = image_effect
-    imagedata['exposure_mode'] = exposure_mode
-    imagedata['awb_mode'] = awb_mode
-    database.insert(0,imagedata)
-    return HTTPFound(location='/')  
+    if timelapse:
+        return HTTPFound(location='/') 
+    else:
+        filename = strftime("%Y-%m-%d.%H.%M.%S.jpg", localtime())
+        take_photo(filename)
+        f = open(RASPISTILL_DIRECTORY + filename,'rb')
+        exif = extract_exif(exifread.process_file(f))    
+        filedata = extract_filedata(os.stat(RASPISTILL_DIRECTORY + filename))  
+        imagedata = dict(filedata.items() + exif.items())
+        imagedata['filename'] = filename
+        imagedata['image_effect'] = image_effect
+        imagedata['exposure_mode'] = exposure_mode
+        imagedata['awb_mode'] = awb_mode
+        database.insert(0,imagedata)
+        return HTTPFound(location='/')  
          
 # View for the archive delete - no site will be generated
 @view_config(route_name='delete')
 def delete_view(request):
     global database
     database.pop(int(request.params['id']))
-    return HTTPFound(location='/archive')  
+    return HTTPFound(location='/archive') 
 
 # View for settings form data - no site will be generated      
 @view_config(route_name='save')
 def save_view(request):
     global exposure_mode, image_effect, preferences_success_alert, image_width
-    global image_height, preferences_fail_alert, awb_mode
+    global image_height, preferences_fail_alert, awb_mode, timelapse_interval
+    global timelapse_time
 
     image_width_temp = request.params['imageWidth']
     image_height_temp = request.params['imageHeight']
+    timelapse_interval_temp = request.params['timelapseInterval']
+    timelapse_time_temp = request.params['timelapseTime']
     
     preferences_success_alert = True
     if image_width_temp:
@@ -170,6 +213,12 @@ def save_view(request):
         else:
             preferences_success_alert = False
             preferences_fail_alert.append(IMAGE_HEIGHT_ALERT)
+            
+    if timelapse_interval_temp:
+        timelapse_interval = timelapse_interval_temp
+        
+    if timelapse_time_temp:
+        timelapse_time = timelapse_time_temp
     
     exposure_mode = request.params['exposureMode']
     image_effect = request.params['imageEffect']
@@ -198,6 +247,35 @@ def take_photo(filename):
             )
     generate_thumbnail(filename)
     return
+    
+def take_timelapse(filename):
+    global timelapse, timelapse_database
+    timelapsedata = {'filename' :  filename}
+    timelapsedata['timeStart'] = str(asctime(localtime()))
+    os.makedirs(TIMELAPSE_DIRECTORY + filename)
+    call (
+        ['raspistill'
+        + ' -w ' + str(image_width)
+        + ' -h ' + str(image_height)
+        + ' -ex ' + exposure_mode
+        + ' -awb ' + awb_mode
+        + ' -ifx ' + image_effect
+        + ' -th ' + THUMBNAIL_SIZE
+        + ' -tl ' + str(timelapse_interval)
+        + ' -t ' + str(timelapse_time) 
+        + ' -o ' + TIMELAPSE_DIRECTORY + filename + '/'
+        + filename + '_%04d.jpg'], shell=True
+        )    
+    timelapsedata['image_effect'] = image_effect
+    timelapsedata['exposure_mode'] = exposure_mode
+    timelapsedata['awb_mode'] = awb_mode
+    timelapsedata['timeEnd'] = str(asctime(localtime()))
+    with tarfile.open(TIMELAPSE_DIRECTORY + filename + '.tar.gz', "w:gz") as tar:
+        tar.add(TIMELAPSE_DIRECTORY + filename, arcname=os.path.basename(TIMELAPSE_DIRECTORY + filename))
+    timelapse_database.insert(0,timelapsedata)
+    timelapse = False
+    
+    return
 
 def generate_thumbnail(filename):
     call (
@@ -223,7 +301,7 @@ def extract_exif(tags):
 def extract_filedata(st):
     return {
         'date' : str(asctime(localtime(st[ST_MTIME]))),
-        'timestamp' : date.today(),
+        'timestamp' : localtime(),
         'filesize': str((st[ST_SIZE])/1000) + ' kB'
             }
             

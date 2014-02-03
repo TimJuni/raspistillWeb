@@ -35,6 +35,7 @@
         </div>
         <div class="panel-body">
       	  <form action="save" method="POST" class="form-horizontal" role="form">
+            <span class="help-block">Image preferences:</span>
       	    <div class="form-group">
               <label for="imageWidth1" class="col-lg-2 control-label">Image Width</label>
               <div class="col-lg-10">
@@ -88,6 +89,19 @@
                   % endfor
                 </select>
               </div>  
+            </div>
+            <span class="help-block">Timelapse preferences:</span>
+      	    <div class="form-group">
+              <label for="TimelapseInterval1" class="col-lg-2 control-label">Timelapse Interval (ms)</label>
+              <div class="col-lg-10">
+                <input type="number" class="form-control" id="TimelapseInterval1" name="timelapseInterval" placeholder="${timelapse_interval}">
+              </div>
+            </div>
+      	    <div class="form-group">
+              <label for="TimelapseTime1" class="col-lg-2 control-label">Timelapse Time (ms)</label>
+              <div class="col-lg-10">
+                <input type="number" class="form-control" id="TimelapseTime1" name="timelapseTime" placeholder="${timelapse_time}">
+              </div>
             </div>
             <div class="form-group">
               <div class="col-lg-offset-2 col-lg-10">

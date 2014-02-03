@@ -2,6 +2,16 @@
 <%inherit file="home-layout.mako"/>
 
 <div class="container">
+  % if timelapse:
+    <div class="row">
+      <div class="col-md-12">
+        <div class="alert alert-danger alert-dismissable">
+          <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+          <strong>Timelapse in progress.</strong> Currently it is not possible to take a photo. You can stop the timelapse if you follow <a href="/timelapse" class="alert-link">this link</a>.
+        </div>
+      </div>
+    </div>
+  % endif
   <div class="row">
     <div class="col-md-8">
       <div class="well">
