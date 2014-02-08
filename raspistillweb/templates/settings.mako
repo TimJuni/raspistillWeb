@@ -12,7 +12,7 @@
       </div>
     </div>
   % endif
-  % if preferences_fail_alert != []:
+  % if preferences_fail_alert != []: 
     <div class="row">
       <div class="col-md-10 col-md-offset-1">
         <div class="alert alert-danger alert-dismissable">
@@ -46,6 +46,20 @@
               <label for="imageHeight1" class="col-lg-2 control-label">Image Height</label>
               <div class="col-lg-10">
                 <input type="number" class="form-control" id="ImageHeight1" name="imageHeight" placeholder="${image_height}">
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="isoOption1" class="col-lg-2 control-label">ISO Option</label>
+              <div class="col-lg-10">
+                <select name="isoOption" class="form-control" id="isoOption1">
+                  % for option in iso_options:
+                    % if option == image_iso:
+                      <option selected>${option}</option>
+                    % else:
+                      <option>${option}</option>
+                    % endif
+                  % endfor
+                </select>
               </div>
             </div>
             <div class="form-group">
@@ -88,6 +102,25 @@
                     % endif
                   % endfor
                 </select>
+              </div>  
+            </div>
+            <div class="form-group">
+              <label for="imageRotation1" class="col-lg-2 control-label">Image Rotation</label>
+              <div class="col-lg-10">
+                <div class="btn-group" data-toggle="buttons">
+                  <label class="btn btn-default ${'active' if image_rotation == '0' else ''}">
+                    <input type="radio" name="imageRotation" value="0"><span class="glyphicon glyphicon-circle-arrow-up"></span> 0°
+                   </label>
+                  <label class="btn btn-default ${'active' if image_rotation == '90' else ''}">
+                    <input type="radio" name="imageRotation" value="90"><span class="glyphicon glyphicon-circle-arrow-right"></span> 90°
+                  </label>
+                  <label class="btn btn-default ${'active' if image_rotation == '180' else ''}">
+                    <input type="radio" name="imageRotation" value="180"><span class="glyphicon glyphicon-circle-arrow-down"></span> 180°
+                  </label>
+                  <label class="btn btn-default ${'active' if image_rotation == '270' else ''}">
+                    <input type="radio" name="imageRotation" value="270"><span class="glyphicon glyphicon-circle-arrow-left"></span> 270°
+                  </label>
+                </div>
               </div>  
             </div>
             <span class="help-block">Timelapse preferences:</span>

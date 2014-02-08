@@ -49,9 +49,19 @@ AWB_MODES = [
     'off', 'auto', 'sun', 'cloud', 'shade', 'tungsten', 'fluorescent',
     'incandescent', 'flash', 'horizon'
     ]
+
+ISO_OPTIONS = [
+    'auto', '100', '150', '200', '250', '300', '400', '500', 
+    '600', '700', '800'
+    ]
     
 IMAGE_HEIGHT_ALERT = 'Please enter an image height between 0 and 1945.'
 IMAGE_WIDTH_ALERT = 'Please enter an image width between 0 and 2593.'
+IMAGE_EFFECT_ALERT = 'Please enter a valid image effect.'
+EXPOSURE_MODE_ALERT = 'Please enter a valid exposure mode.'
+AWB_MODE_ALERT = 'Please enter a valid awb mode.'
+ISO_OPTION_ALERT = 'Please enter a valid ISO option.'
+IMAGE_ROTATION_ALERT = 'Please enter a valid image rotation option.'
 
 THUMBNAIL_SIZE = '240:160:80'
 
@@ -60,8 +70,8 @@ timelapse_database = []
 
 timelapse = False
 
-preferences_success_alert = False
 preferences_fail_alert = []
+preferences_success_alert = False
 
 # image parameter commands
 image_width = 800
@@ -71,6 +81,8 @@ exposure_mode = 'auto'
 awb_mode = 'off'
 timelapse_interval = 4000
 timelapse_time = 20000
+image_ISO = 'auto'
+image_rotation = '0'
 
 # not implemented yet
 image_quality = '100'
@@ -78,7 +90,7 @@ image_sharpness = '0'
 image_contrast = '0'
 image_brightness = '50'
 image_saturation = '0'
-image_ISO = '300'
+
 
 ###############################################################################
 ################################### Views #####################################
@@ -88,17 +100,17 @@ image_ISO = '300'
 # View for the /settings site
 @view_config(route_name='settings', renderer='settings.mako')
 def settings_view(request):
-    global preferences_success_alert, preferences_fail_alert
-    
-    preferences_success_alert_temp = False
-    if preferences_success_alert is True:
-        preferences_success_alert_temp = True
-        preferences_success_alert = False
+    global preferences_fail_alert, preferences_success_alert
         
     preferences_fail_alert_temp = []    
     if preferences_fail_alert is not []:
         preferences_fail_alert_temp = preferences_fail_alert
         preferences_fail_alert = []
+     
+    preferences_success_alert_temp = False  
+    if preferences_success_alert:
+        preferences_success_alert_temp = True
+        preferences_success_alert = False
         
     return {'project' : 'raspistillWeb',
             'image_effect' : image_effect,
@@ -109,10 +121,13 @@ def settings_view(request):
             'awb_modes' : AWB_MODES,
             'image_width' : image_width,
             'image_height' : image_height,
+            'image_iso' : image_ISO,
+            'iso_options' :  ISO_OPTIONS, 
             'timelapse_interval' : timelapse_interval,
             'timelapse_time' : timelapse_time,
+            'preferences_fail_alert' : preferences_fail_alert_temp,
             'preferences_success_alert' : preferences_success_alert_temp,
-            'preferences_fail_alert' : preferences_fail_alert_temp
+            'image_rotation' : image_rotation
             } 
             
 # View for the /archive site
@@ -190,28 +205,30 @@ def delete_view(request):
 # View for settings form data - no site will be generated      
 @view_config(route_name='save')
 def save_view(request):
-    global exposure_mode, image_effect, preferences_success_alert, image_width
+    global exposure_mode, image_effect, image_width, preferences_success_alert
     global image_height, preferences_fail_alert, awb_mode, timelapse_interval
-    global timelapse_time
+    global timelapse_time, image_ISO, image_rotation
 
     image_width_temp = request.params['imageWidth']
     image_height_temp = request.params['imageHeight']
     timelapse_interval_temp = request.params['timelapseInterval']
     timelapse_time_temp = request.params['timelapseTime']
+    exposure_mode_temp = request.params['exposureMode']
+    image_effect_temp = request.params['imageEffect']
+    awb_mode_temp = request.params['awbMode']
+    image_ISO_temp = request.params['isoOption']
+    image_rotation_temp = request.params['imageRotation']
     
-    preferences_success_alert = True
     if image_width_temp:
         if 0 < int(image_width_temp) < 2593:
             image_width = image_width_temp
         else:
-            preferences_success_alert = False
             preferences_fail_alert.append(IMAGE_WIDTH_ALERT)
     
     if image_height_temp:
         if 0 < int(image_height_temp) < 1945:
             image_height = image_height_temp
         else:
-            preferences_success_alert = False
             preferences_fail_alert.append(IMAGE_HEIGHT_ALERT)
             
     if timelapse_interval_temp:
@@ -220,9 +237,34 @@ def save_view(request):
     if timelapse_time_temp:
         timelapse_time = timelapse_time_temp
     
-    exposure_mode = request.params['exposureMode']
-    image_effect = request.params['imageEffect']
-    awb_mode = request.params['awbMode']
+    if exposure_mode_temp and exposure_mode_temp in EXPOSURE_MODES:
+        exposure_mode = exposure_mode_temp
+    else:
+        preferences_fail_alert.append(EXPOSURE_MODE_ALERT)
+        
+    if image_effect_temp and image_effect_temp in IMAGE_EFFECTS:
+        image_effect = image_effect_temp
+    else:
+        preferences_fail_alert.append(IMAGE_EFFECT_ALERT)
+        
+    if awb_mode_temp and awb_mode_temp in AWB_MODES:
+        awb_mode = awb_mode_temp
+    else:
+        preferences_fail_alert.append(AWB_MODE_ALERT)
+        
+    if image_ISO_temp and image_ISO_temp in ISO_OPTIONS:
+        image_ISO = image_ISO_temp
+    else:
+        preferences_fail_alert.append(ISO_OPTION_ALERT)
+        
+    if image_rotation_temp and image_rotation_temp in ['0','90','180','270']:
+        image_rotation = image_rotation_temp
+    else:
+        preferences_fail_alert.append(IMAGE_ROTATION_ALERT)  
+        
+    if preferences_fail_alert == []:
+        preferences_success_alert = True 
+            
     return HTTPFound(location='/settings')  
 
 ###############################################################################
@@ -230,13 +272,19 @@ def save_view(request):
 ###############################################################################
 
 def take_photo(filename):
+    if image_ISO == 'auto':
+        iso_call = ''
+    else:
+        iso_call = ' -ISO ' + str(image_ISO)
     call (
         ['raspistill -t 500'
         + ' -w ' + str(image_width)
         + ' -h ' + str(image_height)
         + ' -ex ' + exposure_mode
         + ' -awb ' + awb_mode
+        + ' -rot ' + str(image_rotation)
         + ' -ifx ' + image_effect
+        + iso_call
         + ' -th ' + THUMBNAIL_SIZE 
         + ' -o ' + RASPISTILL_DIRECTORY + filename], shell=True
         )

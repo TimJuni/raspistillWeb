@@ -18,7 +18,7 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
-          <a class="navbar-brand" href="#">raspistillWeb</a>
+          <a class="navbar-brand" href="/">raspistillWeb</a>
         </div>
         <div class="navbar-collapse collapse" style="height: 1px;">
           <ul class="nav navbar-nav">
