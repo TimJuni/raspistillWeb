@@ -35,19 +35,40 @@
         </div>
         <div class="panel-body">
       	  <form action="save" method="POST" class="form-horizontal" role="form">
-            <span class="help-block">Image preferences:</span>
-      	    <div class="form-group">
-              <label for="imageWidth1" class="col-lg-2 control-label">Image Width</label>
-              <div class="col-lg-10">
-                <input type="number" class="form-control" id="ImageWidth1" name="imageWidth" placeholder="${image_width}">
-              </div>
-            </div>
+            <span class="help-block">Image preferences:</span>            
             <div class="form-group">
-              <label for="imageHeight1" class="col-lg-2 control-label">Image Height</label>
-              <div class="col-lg-10">
-                <input type="number" class="form-control" id="ImageHeight1" name="imageHeight" placeholder="${image_height}">
+              <label for="imageResolution1" class="col-lg-2 control-label">Image Resolution</label>
+              <div class="col-sm-3">
+                <select name="imageResolution" class="form-control" id="imageResolution1">
+                      <option selected>${image_width}x${image_height}</option>
+                  % for resolution in image_resolutions:
+                    % if resolution != image_width + 'x' + image_height:                               
+                      <option>${resolution}</option>
+                      % endif
+                  % endfor
+                </select>
+              </div>
+              <div class="col-sm-1">
+                <label for="imageResolution2" class="control-label">or</label>
+              </div>
+                            
+              
+              <div class="col-md-4 col-lg-3 col-sm-4">
+                <div class="input-group">
+                  <span class="input-group-addon">width</span>
+                  <input type="number" class="form-control" name="imageWidth" placeholder="${image_width}">
+                </div>
+              </div>
+              <div class="col-md-4 col-lg-3 col-sm-4">
+                <div class="input-group">
+                  <span class="input-group-addon">height</span>
+                  <input type="number" class="form-control" name="imageHeight" placeholder="${image_height}">
+                </div>                
               </div>
             </div>
+            
+            
+            
             <div class="form-group">
               <label for="isoOption1" class="col-lg-2 control-label">ISO Option</label>
               <div class="col-lg-10">
@@ -62,6 +83,9 @@
                 </select>
               </div>
             </div>
+            
+            
+            
             <div class="form-group">
               <label for="exposureMode1" class="col-lg-2 control-label">Exposure Mode</label>
               <div class="col-lg-10">
@@ -109,16 +133,16 @@
               <div class="col-lg-10">
                 <div class="btn-group" data-toggle="buttons">
                   <label class="btn btn-default ${'active' if image_rotation == '0' else ''}">
-                    <input type="radio" name="imageRotation" value="0"><span class="glyphicon glyphicon-circle-arrow-up"></span> 0°
+                    <input type="radio" name="imageRotation" value="0" ${'checked' if image_rotation == '0' else ''}><span class="glyphicon glyphicon-circle-arrow-up"></span> 0°
                    </label>
                   <label class="btn btn-default ${'active' if image_rotation == '90' else ''}">
-                    <input type="radio" name="imageRotation" value="90"><span class="glyphicon glyphicon-circle-arrow-right"></span> 90°
+                    <input type="radio" name="imageRotation" value="90" ${'checked' if image_rotation == '90' else ''}><span class="glyphicon glyphicon-circle-arrow-right"></span> 90°
                   </label>
                   <label class="btn btn-default ${'active' if image_rotation == '180' else ''}">
-                    <input type="radio" name="imageRotation" value="180"><span class="glyphicon glyphicon-circle-arrow-down"></span> 180°
+                    <input type="radio" name="imageRotation" value="180" ${'checked' if image_rotation == '180' else ''}><span class="glyphicon glyphicon-circle-arrow-down"></span> 180°
                   </label>
                   <label class="btn btn-default ${'active' if image_rotation == '270' else ''}">
-                    <input type="radio" name="imageRotation" value="270"><span class="glyphicon glyphicon-circle-arrow-left"></span> 270°
+                    <input type="radio" name="imageRotation" value="270" ${'checked' if image_rotation == '270' else ''}><span class="glyphicon glyphicon-circle-arrow-left"></span> 270°
                   </label>
                 </div>
               </div>  

@@ -55,6 +55,10 @@ ISO_OPTIONS = [
     '600', '700', '800'
     ]
     
+IMAGE_RESOLUTIONS = [
+    '800x600','1024x786','1900x1200','1280x720','1920x1080', '2593x1944'
+    ]
+    
 IMAGE_HEIGHT_ALERT = 'Please enter an image height between 0 and 1945.'
 IMAGE_WIDTH_ALERT = 'Please enter an image width between 0 and 2593.'
 IMAGE_EFFECT_ALERT = 'Please enter a valid image effect.'
@@ -74,8 +78,8 @@ preferences_fail_alert = []
 preferences_success_alert = False
 
 # image parameter commands
-image_width = 800
-image_height = 600
+image_width = '800'
+image_height = '600'
 image_effect = 'none'
 exposure_mode = 'auto'
 awb_mode = 'off'
@@ -119,15 +123,16 @@ def settings_view(request):
             'image_effects' : IMAGE_EFFECTS,
             'exposure_modes' : EXPOSURE_MODES,
             'awb_modes' : AWB_MODES,
-            'image_width' : image_width,
-            'image_height' : image_height,
+            'image_width' : str(image_width),
+            'image_height' : str(image_height),
             'image_iso' : image_ISO,
             'iso_options' :  ISO_OPTIONS, 
             'timelapse_interval' : timelapse_interval,
             'timelapse_time' : timelapse_time,
             'preferences_fail_alert' : preferences_fail_alert_temp,
             'preferences_success_alert' : preferences_success_alert_temp,
-            'image_rotation' : image_rotation
+            'image_rotation' : image_rotation,
+            'image_resolutions' : IMAGE_RESOLUTIONS
             } 
             
 # View for the /archive site
@@ -218,6 +223,7 @@ def save_view(request):
     awb_mode_temp = request.params['awbMode']
     image_ISO_temp = request.params['isoOption']
     image_rotation_temp = request.params['imageRotation']
+    image_resolution = request.params['imageResolution']
     
     if image_width_temp:
         if 0 < int(image_width_temp) < 2593:
@@ -230,6 +236,10 @@ def save_view(request):
             image_height = image_height_temp
         else:
             preferences_fail_alert.append(IMAGE_HEIGHT_ALERT)
+            
+    if not image_width_temp and not image_height_temp:
+        image_width = image_resolution.split('x')[0]
+        image_height = image_resolution.split('x')[1]
             
     if timelapse_interval_temp:
         timelapse_interval = timelapse_interval_temp
