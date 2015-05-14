@@ -18,7 +18,7 @@ from pyramid.view import view_config
 from pyramid.httpexceptions import HTTPFound
 import exifread
 import os
-import thread
+#import thread
 import tarfile
 from subprocess import call
 from time import gmtime, strftime, localtime, asctime, mktime
@@ -176,7 +176,7 @@ def timelapse_start_view(request):
     global timelapse
     timelapse = True
     filename = strftime("%Y-%m-%d.%H.%M.%S", localtime())
-    thread.start_new_thread( take_timelapse, (filename, ) )
+    #thread.start_new_thread( take_timelapse, (filename, ) )
     return HTTPFound(location='/timelapse') 
 
 
@@ -189,14 +189,28 @@ def photo_view(request):
     else:
         filename = strftime("%Y-%m-%d.%H.%M.%S.jpg", localtime())
         take_photo(filename)
+        '''
         f = open(RASPISTILL_DIRECTORY + filename,'rb')
         exif = extract_exif(exifread.process_file(f))    
-        filedata = extract_filedata(os.stat(RASPISTILL_DIRECTORY + filename))  
+        filedata = extract_filedata(os.stat(RASPISTILL_DIRECTORY + filename))
         imagedata = dict(filedata.items() + exif.items())
         imagedata['filename'] = filename
         imagedata['image_effect'] = image_effect
         imagedata['exposure_mode'] = exposure_mode
         imagedata['awb_mode'] = awb_mode
+        '''
+        imagedata = dict()
+        imagedata['filename'] = filename
+        imagedata['image_effect'] = 'test'
+        imagedata['exposure_mode'] = 'test'
+        imagedata['awb_mode'] = 'test'
+        imagedata['resolution'] = '800x600'
+        imagedata['ISO'] = '300'
+        imagedata['exposure_time'] = '100'
+        imagedata['date'] = 'test'
+        imagedata['timestamp'] = localtime()
+        imagedata['filesize'] = '100kb'
+
         database.insert(0,imagedata)
         return HTTPFound(location='/')  
          
@@ -282,6 +296,7 @@ def save_view(request):
 ###############################################################################
 
 def take_photo(filename):
+    '''
     if image_ISO == 'auto':
         iso_call = ''
     else:
@@ -304,7 +319,12 @@ def take_photo(filename):
             + ' raspistillweb/pictures/' + filename], shell=True
             )
     generate_thumbnail(filename)
+    '''
+
+    call(['cp raspistillweb/pictures/preview.jpg raspistillweb/pictures/'+filename],shell=True)
+    generate_thumbnail(filename)
     return
+
     
 def take_timelapse(filename):
     global timelapse, timelapse_database

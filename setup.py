@@ -10,11 +10,15 @@ with open(os.path.join(here, 'CHANGES.txt')) as f:
 
 requires = [
     'pyramid',
-    'pyramid_chameleon',
     'pyramid_debugtoolbar',
     'waitress',
     'pyramid_mako', #new dependency
-    'exifread', #new dependency
+    'exifread', #new dependency,
+    'pyramid_tm',#fordf
+    'SQLAlchemy',#fordb
+    'transaction',#fordb
+    'zope.sqlalchemy',#fordb
+    'docutils',
     ]
 
 setup(name='raspistillWeb',
@@ -40,5 +44,7 @@ setup(name='raspistillWeb',
       entry_points="""\
       [paste.app_factory]
       main = raspistillweb:main
+      [console_scripts]
+      initialize_raspistillweb_db = raspistillweb.scripts.initializedb:main
       """,
       )
