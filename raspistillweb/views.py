@@ -25,13 +25,22 @@ from time import gmtime, strftime, localtime, asctime, mktime
 from stat import *
 from datetime import *
 
+from sqlalchemy.exc import DBAPIError
+
+from .models import (
+    DBSession,
+    Picture,
+    Settings,
+    Timelapse,
+    )
+
 
 # Modify these lines to change the directory where the pictures and thumbnails
 # are stored. Make sure that the directories exist and the user who runs this
 # program has write access to the directories. 
 RASPISTILL_DIRECTORY = 'raspistillweb/pictures/' # Example: /home/pi/pics/
 THUMBNAIL_DIRECTORY = 'raspistillweb/thumbnails/' # Example: /home/pi/thumbs/
-TIMELAPSE_DIRECTORY = 'raspistillweb/time-lapse/'
+TIMELAPSE_DIRECTORY = 'raspistillweb/time-lapse/' # Example: /home/pi/timelapse/
 
 IMAGE_EFFECTS = [
     'none', 'negative', 'solarise', 'sketch', 'denoise', 'emboss', 'oilpaint', 
@@ -69,24 +78,10 @@ IMAGE_ROTATION_ALERT = 'Please enter a valid image rotation option.'
 
 THUMBNAIL_SIZE = '240:160:80'
 
-database = []
-timelapse_database = []
-
 timelapse = False
 
 preferences_fail_alert = []
 preferences_success_alert = False
-
-# image parameter commands
-image_width = '800'
-image_height = '600'
-image_effect = 'none'
-exposure_mode = 'auto'
-awb_mode = 'off'
-timelapse_interval = 4000
-timelapse_time = 20000
-image_ISO = 'auto'
-image_rotation = '0'
 
 # not implemented yet
 image_quality = '100'
@@ -104,6 +99,7 @@ image_saturation = '0'
 # View for the /settings site
 @view_config(route_name='settings', renderer='settings.mako')
 def settings_view(request):
+    app_settings = DBSession.query(Settings).first()
     global preferences_fail_alert, preferences_success_alert
         
     preferences_fail_alert_temp = []    
@@ -117,57 +113,73 @@ def settings_view(request):
         preferences_success_alert = False
         
     return {'project' : 'raspistillWeb',
-            'image_effect' : image_effect,
-            'exposure_mode' : exposure_mode,
-            'awb_mode' : awb_mode,
+            'image_effect' : app_settings.image_effect,
+            'exposure_mode' : app_settings.exposure_mode,
+            'awb_mode' : app_settings.awb_mode,
             'image_effects' : IMAGE_EFFECTS,
             'exposure_modes' : EXPOSURE_MODES,
             'awb_modes' : AWB_MODES,
-            'image_width' : str(image_width),
-            'image_height' : str(image_height),
-            'image_iso' : image_ISO,
+            'image_width' : str(app_settings.image_width),
+            'image_height' : str(app_settings.image_height),
+            'image_iso' : app_settings.image_ISO,
             'iso_options' :  ISO_OPTIONS, 
-            'timelapse_interval' : timelapse_interval,
-            'timelapse_time' : timelapse_time,
+            'timelapse_interval' : app_settings.timelapse_interval,
+            'timelapse_time' : app_settings.timelapse_time,
             'preferences_fail_alert' : preferences_fail_alert_temp,
             'preferences_success_alert' : preferences_success_alert_temp,
-            'image_rotation' : image_rotation,
+            'image_rotation' : app_settings.image_rotation,
             'image_resolutions' : IMAGE_RESOLUTIONS
             } 
             
 # View for the /archive site
 @view_config(route_name='archive', renderer='archive.mako')
 def archive_view(request):
+
+    pictures = DBSession.query(Picture).all()
+    picturedb = []
+    for picture in pictures:
+        imagedata = get_picture_data(picture)
+        picturedb.insert(0,imagedata)
     return {'project' : 'raspistillWeb',
-            'database' : database
+            'database' : picturedb
             }
                     
 # View for the / site
 @view_config(route_name='home', renderer='home.mako')
 def home_view(request):
-    if database == []:
+    pictures = DBSession.query(Picture).all()
+    if len(pictures) == 0:
         return HTTPFound(location='/photo')
-    elif timelapse:
-        return {'project': 'raspistillWeb',
-                'imagedata' : database[0],
-                'timelapse' : timelapse,
-                }
-    elif (mktime(localtime()) - mktime(database[0]['timestamp'])) > 1800: 
-        return HTTPFound(location='/photo') 
     else:
-        return {'project': 'raspistillWeb',
-                'imagedata' : database[0],
-                'timelapse' : timelapse,
-                }
+        picture_data = get_picture_data(pictures[-1])
+        if timelapse:            
+            return {'project': 'raspistillWeb',
+                    'imagedata' : picture_data,
+                    'timelapse' : timelapse,
+                    }
+        #elif (mktime(localtime()) - mktime(picture_data['timestamp'])) > 1800: 
+        #    return HTTPFound(location='/photo') 
+        else:
+            return {'project': 'raspistillWeb',
+                    'imagedata' : picture_data,
+                    'timelapse' : timelapse,
+                    }
 
 # View for the /timelapse site        
 @view_config(route_name='timelapse', renderer='timelapse.mako')
 def timelapse_view(request):
+    app_settings = DBSession.query(Settings).first()
+    timelapse_collection = DBSession.query(Timelapse).all()
+    timelapsedb = []
+    for timelapse_rec in timelapse_collection:
+        timelapse_data = get_timelapse_data(timelapse_rec)
+        timelapsedb.insert(0,timelapse_data)
+    
     return {'project': 'raspistillWeb',
             'timelapse' : timelapse,
-            'timelapseInterval' : timelapse_interval,
-            'timelapseTime' : timelapse_time,
-            'timelapseDatabase' : timelapse_database
+            'timelapseInterval' : app_settings.timelapse_interval,
+            'timelapseTime' : app_settings.timelapse_time,
+            'timelapseDatabase' : timelapsedb
             }
             
 # View for the timelapse start - no site will be generated
@@ -183,10 +195,10 @@ def timelapse_start_view(request):
 # View to take a photo - no site will be generated
 @view_config(route_name='photo')
 def photo_view(request):
-    global database
     if timelapse:
         return HTTPFound(location='/') 
     else:
+        app_settings = DBSession.query(Settings).first()
         filename = strftime("%Y-%m-%d.%H.%M.%S.jpg", localtime())
         take_photo(filename)
         '''
@@ -195,9 +207,9 @@ def photo_view(request):
         filedata = extract_filedata(os.stat(RASPISTILL_DIRECTORY + filename))
         imagedata = dict(filedata.items() + exif.items())
         imagedata['filename'] = filename
-        imagedata['image_effect'] = image_effect
-        imagedata['exposure_mode'] = exposure_mode
-        imagedata['awb_mode'] = awb_mode
+        imagedata['image_effect'] = app_settings.image_effect
+        imagedata['exposure_mode'] = app_settings.exposure_mode
+        imagedata['awb_mode'] = app_settings.awb_mode
         '''
         imagedata = dict()
         imagedata['filename'] = filename
@@ -209,24 +221,41 @@ def photo_view(request):
         imagedata['exposure_time'] = '100'
         imagedata['date'] = 'test'
         imagedata['timestamp'] = localtime()
-        imagedata['filesize'] = '100kb'
-
-        database.insert(0,imagedata)
+        imagedata['filesize'] = 100
+        picture = Picture(filename=imagedata['filename'],
+                        image_effect=imagedata['image_effect'],
+                        exposure_mode=imagedata['exposure_mode'],
+                        awb_mode=imagedata['awb_mode'],
+                        resolution=imagedata['resolution'],
+                        ISO=imagedata['ISO'],
+                        exposure_time=imagedata['exposure_time'],
+                        date=imagedata['date'],
+                        timestamp='test',
+                        filesize=imagedata['filesize'])
+        DBSession.add(picture)
         return HTTPFound(location='/')  
          
 # View for the archive delete - no site will be generated
-@view_config(route_name='delete')
-def delete_view(request):
-    global database
-    database.pop(int(request.params['id']))
-    return HTTPFound(location='/archive') 
+@view_config(route_name='delete_picture')
+def pic_delete_view(request):    
+    p_id = request.params['id']
+    pic = DBSession.query(Picture).filter_by(id=int(p_id)).first()        
+    DBSession.delete(pic)
+    return HTTPFound(location='/archive')
+
+# View for the timelapse delete - no site will be generated
+@view_config(route_name='delete_timelapse')
+def tl_delete_view(request):
+    t_id = request.params['id']
+    tl = DBSession.query(Timelapse).filter_by(id=int(t_id)).first()        
+    DBSession.delete(tl)
+    return HTTPFound(location='/timelapse')
 
 # View for settings form data - no site will be generated      
 @view_config(route_name='save')
 def save_view(request):
-    global exposure_mode, image_effect, image_width, preferences_success_alert
-    global image_height, preferences_fail_alert, awb_mode, timelapse_interval
-    global timelapse_time, image_ISO, image_rotation
+
+    global preferences_success_alert, preferences_fail_alert
 
     image_width_temp = request.params['imageWidth']
     image_height_temp = request.params['imageHeight']
@@ -238,57 +267,60 @@ def save_view(request):
     image_ISO_temp = request.params['isoOption']
     image_rotation_temp = request.params['imageRotation']
     image_resolution = request.params['imageResolution']
+
+    app_settings = DBSession.query(Settings).first()
     
     if image_width_temp:
         if 0 < int(image_width_temp) < 2593:
-            image_width = image_width_temp
+            app_settings.image_width = image_width_temp
         else:
             preferences_fail_alert.append(IMAGE_WIDTH_ALERT)
     
     if image_height_temp:
         if 0 < int(image_height_temp) < 1945:
-            image_height = image_height_temp
+            app_settings.image_height = image_height_temp
         else:
             preferences_fail_alert.append(IMAGE_HEIGHT_ALERT)
             
     if not image_width_temp and not image_height_temp:
-        image_width = image_resolution.split('x')[0]
-        image_height = image_resolution.split('x')[1]
+        app_settings.image_width = image_resolution.split('x')[0]
+        app_settings.image_height = image_resolution.split('x')[1]
             
     if timelapse_interval_temp:
-        timelapse_interval = timelapse_interval_temp
+        app_settings.timelapse_interval = timelapse_interval_temp
         
     if timelapse_time_temp:
-        timelapse_time = timelapse_time_temp
+        app_settings.timelapse_time = timelapse_time_temp
     
     if exposure_mode_temp and exposure_mode_temp in EXPOSURE_MODES:
-        exposure_mode = exposure_mode_temp
+        app_settings.exposure_mode = exposure_mode_temp
     else:
         preferences_fail_alert.append(EXPOSURE_MODE_ALERT)
         
     if image_effect_temp and image_effect_temp in IMAGE_EFFECTS:
-        image_effect = image_effect_temp
+        app_settings.image_effect = image_effect_temp
     else:
         preferences_fail_alert.append(IMAGE_EFFECT_ALERT)
         
     if awb_mode_temp and awb_mode_temp in AWB_MODES:
-        awb_mode = awb_mode_temp
+        app_settings.awb_mode = awb_mode_temp
     else:
         preferences_fail_alert.append(AWB_MODE_ALERT)
         
     if image_ISO_temp and image_ISO_temp in ISO_OPTIONS:
-        image_ISO = image_ISO_temp
+        app_settings.image_ISO = image_ISO_temp
     else:
         preferences_fail_alert.append(ISO_OPTION_ALERT)
         
     if image_rotation_temp and image_rotation_temp in ['0','90','180','270']:
-        image_rotation = image_rotation_temp
+        app_settings.image_rotation = image_rotation_temp
     else:
         preferences_fail_alert.append(IMAGE_ROTATION_ALERT)  
         
     if preferences_fail_alert == []:
         preferences_success_alert = True 
-            
+    
+    DBSession.flush()      
     return HTTPFound(location='/settings')  
 
 ###############################################################################
@@ -296,19 +328,20 @@ def save_view(request):
 ###############################################################################
 
 def take_photo(filename):
-    '''
-    if image_ISO == 'auto':
+    app_settings = DBSession.query(Settings).first()
+    
+    if app_settings.image_ISO == 'auto':
         iso_call = ''
     else:
-        iso_call = ' -ISO ' + str(image_ISO)
+        iso_call = ' -ISO ' + str(app_settings.image_ISO)
     call (
         ['raspistill -t 500'
-        + ' -w ' + str(image_width)
-        + ' -h ' + str(image_height)
-        + ' -ex ' + exposure_mode
-        + ' -awb ' + awb_mode
-        + ' -rot ' + str(image_rotation)
-        + ' -ifx ' + image_effect
+        + ' -w ' + str(app_settings.image_width)
+        + ' -h ' + str(app_settings.image_height)
+        + ' -ex ' + app_settings.exposure_mode
+        + ' -awb ' + app_settings.awb_mode
+        + ' -rot ' + str(app_settings.image_rotation)
+        + ' -ifx ' + app_settings.image_effect
         + iso_call
         + ' -th ' + THUMBNAIL_SIZE 
         + ' -o ' + RASPISTILL_DIRECTORY + filename], shell=True
@@ -319,38 +352,51 @@ def take_photo(filename):
             + ' raspistillweb/pictures/' + filename], shell=True
             )
     generate_thumbnail(filename)
-    '''
+    
 
-    call(['cp raspistillweb/pictures/preview.jpg raspistillweb/pictures/'+filename],shell=True)
-    generate_thumbnail(filename)
+    #call(['cp raspistillweb/pictures/preview.jpg raspistillweb/pictures/'+filename],shell=True)
+    #generate_thumbnail(filename)
     return
 
     
 def take_timelapse(filename):
     global timelapse, timelapse_database
+
+    app_settings = DBSession.query(Settings).first()
     timelapsedata = {'filename' :  filename}
     timelapsedata['timeStart'] = str(asctime(localtime()))
     os.makedirs(TIMELAPSE_DIRECTORY + filename)
     call (
         ['raspistill'
-        + ' -w ' + str(image_width)
-        + ' -h ' + str(image_height)
-        + ' -ex ' + exposure_mode
-        + ' -awb ' + awb_mode
-        + ' -ifx ' + image_effect
+        + ' -w ' + str(app_settings.image_width)
+        + ' -h ' + str(app_settings.image_height)
+        + ' -ex ' + app_settings.exposure_mode
+        + ' -awb ' + app_settings.awb_mode
+        + ' -ifx ' + app_settings.image_effect
         + ' -th ' + THUMBNAIL_SIZE
-        + ' -tl ' + str(timelapse_interval)
-        + ' -t ' + str(timelapse_time) 
+        + ' -tl ' + str(app_settings.timelapse_interval)
+        + ' -t ' + str(app_settings.timelapse_time) 
         + ' -o ' + TIMELAPSE_DIRECTORY + filename + '/'
         + filename + '_%04d.jpg'], shell=True
         )    
-    timelapsedata['image_effect'] = image_effect
-    timelapsedata['exposure_mode'] = exposure_mode
-    timelapsedata['awb_mode'] = awb_mode
+    timelapsedata['image_effect'] = app_settings.image_effect
+    timelapsedata['exposure_mode'] = app_settings.exposure_mode
+    timelapsedata['awb_mode'] = app_settings.awb_mode
     timelapsedata['timeEnd'] = str(asctime(localtime()))
+
+    timelapse_data = Timelapse(
+                        filename = timelapsedata['filename'],
+                        timeStart = timelapsedata['timeStart'],
+                        image_effect = timelapsedata['image_effect'],
+                        exposure_mode = timelapsedata['exposure_mode'],
+                        awb_mode = timelapsedata['awb_mode'],
+                        timeEnd = timelapsedata['timeEnd'],
+                    )
+
+    DBSession.add(timelapse_data)
     with tarfile.open(TIMELAPSE_DIRECTORY + filename + '.tar.gz', "w:gz") as tar:
         tar.add(TIMELAPSE_DIRECTORY + filename, arcname=os.path.basename(TIMELAPSE_DIRECTORY + filename))
-    timelapse_database.insert(0,timelapsedata)
+
     timelapse = False
     
     return
@@ -374,8 +420,7 @@ def extract_exif(tags):
         'ISO' : str(tags['EXIF ISOSpeedRatings']),
         'exposure_time' : str(tags['EXIF ExposureTime'])
             }
-        
-    
+         
 def extract_filedata(st):
     return {
         'date' : str(asctime(localtime(st[ST_MTIME]))),
@@ -383,4 +428,28 @@ def extract_filedata(st):
         'filesize': str((st[ST_SIZE])/1000) + ' kB'
             }
             
+def get_picture_data(picture):
+    imagedata = dict()
+    imagedata['id'] = picture.id
+    imagedata['filename'] = picture.filename
+    imagedata['image_effect'] = picture.image_effect
+    imagedata['exposure_mode'] = picture.exposure_mode
+    imagedata['awb_mode'] = picture.awb_mode
+    imagedata['resolution'] = picture.resolution
+    imagedata['ISO'] = picture.ISO
+    imagedata['exposure_time'] = picture.exposure_time
+    imagedata['date'] = picture.date
+    imagedata['timestamp'] = picture.timestamp
+    imagedata['filesize'] = picture.filesize
+    return imagedata
 
+def get_timelapse_data(timelapse_rec):
+    timelapse_data = dict()
+    timelapse_data['id'] = timelapse_rec.id
+    timelapse_data['filename'] = timelapse_rec.filename
+    timelapse_data['image_effect'] = timelapse_rec.image_effect
+    timelapse_data['exposure_mode'] = timelapse_rec.exposure_mode
+    timelapse_data['awb_mode'] = timelapse_rec.awb_mode
+    timelapse_data['timeStart'] = timelapse_rec.timeStart
+    timelapse_data['timeEnd'] = timelapse_rec.timeEnd
+    return timelapse_data

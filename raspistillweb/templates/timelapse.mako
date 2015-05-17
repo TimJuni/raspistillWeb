@@ -37,6 +37,9 @@
     <div class="col-xs-6 col-sm-4 col-md-3">
       <div class="panel panel-default">
         <div class="panel-heading">
+          <form action="delete_timelapse" method="POST">
+            <button type="submit" name="id" value="${file['id']}" class="close">&times;</button>
+          </form>
           <h3 class="panel-title">${file['timeStart']}</h3>
         </div>
         <div class="panel-body">
