@@ -201,7 +201,7 @@ def photo_view(request):
         app_settings = DBSession.query(Settings).first()
         filename = strftime("%Y-%m-%d.%H.%M.%S.jpg", localtime())
         take_photo(filename)
-        '''
+        
         f = open(RASPISTILL_DIRECTORY + filename,'rb')
         exif = extract_exif(exifread.process_file(f))    
         filedata = extract_filedata(os.stat(RASPISTILL_DIRECTORY + filename))
@@ -222,6 +222,7 @@ def photo_view(request):
         imagedata['date'] = 'test'
         imagedata['timestamp'] = localtime()
         imagedata['filesize'] = 100
+        '''
         picture = Picture(filename=imagedata['filename'],
                         image_effect=imagedata['image_effect'],
                         exposure_mode=imagedata['exposure_mode'],
