@@ -59,7 +59,7 @@ def main(argv=sys.argv):
                         timelapse_time = 20000,
                         exposure_mode = 'auto',
                         image_effect = 'none',
-                        awb_mode = 'off',
+                        awb_mode = 'auto',
                         image_ISO = 'auto',
                         image_rotation = '0'
                         )

@@ -14,15 +14,14 @@ requires = [
     'waitress',
     'pyramid_mako', #new dependency
     'exifread', #new dependency,
-    'pyramid_tm',#fordf
+    'pyramid_tm',#fordb
     'SQLAlchemy',#fordb
     'transaction',#fordb
     'zope.sqlalchemy',#fordb
-    'docutils',
     ]
 
 setup(name='raspistillWeb',
-      version='0.1',
+      version='0.2',
       description='raspistillWeb',
       long_description=README + '\n\n' + CHANGES,
       classifiers=[

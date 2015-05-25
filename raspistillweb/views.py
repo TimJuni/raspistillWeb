@@ -18,7 +18,7 @@ from pyramid.view import view_config
 from pyramid.httpexceptions import HTTPFound
 import exifread
 import os
-#import thread
+import threading
 import tarfile
 from subprocess import call
 from time import gmtime, strftime, localtime, asctime, mktime
@@ -26,6 +26,8 @@ from stat import *
 from datetime import *
 
 from sqlalchemy.exc import DBAPIError
+
+import transaction
 
 from .models import (
     DBSession,
@@ -79,6 +81,7 @@ IMAGE_ROTATION_ALERT = 'Please enter a valid image rotation option.'
 THUMBNAIL_SIZE = '240:160:80'
 
 timelapse = False
+timelapse_database = None
 
 preferences_fail_alert = []
 preferences_success_alert = False
@@ -123,8 +126,8 @@ def settings_view(request):
             'image_height' : str(app_settings.image_height),
             'image_iso' : app_settings.image_ISO,
             'iso_options' :  ISO_OPTIONS, 
-            'timelapse_interval' : app_settings.timelapse_interval,
-            'timelapse_time' : app_settings.timelapse_time,
+            'timelapse_interval' : str(app_settings.timelapse_interval),
+            'timelapse_time' : str(app_settings.timelapse_time),
             'preferences_fail_alert' : preferences_fail_alert_temp,
             'preferences_success_alert' : preferences_success_alert_temp,
             'image_rotation' : app_settings.image_rotation,
@@ -168,6 +171,12 @@ def home_view(request):
 # View for the /timelapse site        
 @view_config(route_name='timelapse', renderer='timelapse.mako')
 def timelapse_view(request):
+    global timelapse_database
+
+    #if timelapse_database is not None:
+    #    DBSession.add(timelapse_database)
+    #    timelapse_database = None
+
     app_settings = DBSession.query(Settings).first()
     timelapse_collection = DBSession.query(Timelapse).all()
     timelapsedb = []
@@ -177,8 +186,8 @@ def timelapse_view(request):
     
     return {'project': 'raspistillWeb',
             'timelapse' : timelapse,
-            'timelapseInterval' : app_settings.timelapse_interval,
-            'timelapseTime' : app_settings.timelapse_time,
+            'timelapseInterval' : str(app_settings.timelapse_interval),
+            'timelapseTime' : str(app_settings.timelapse_time),
             'timelapseDatabase' : timelapsedb
             }
             
@@ -188,7 +197,8 @@ def timelapse_start_view(request):
     global timelapse
     timelapse = True
     filename = strftime("%Y-%m-%d.%H.%M.%S", localtime())
-    #thread.start_new_thread( take_timelapse, (filename, ) )
+    t = threading.Thread(target=take_timelapse, args=(filename, ))
+    t.start()
     return HTTPFound(location='/timelapse') 
 
 
@@ -205,11 +215,11 @@ def photo_view(request):
         f = open(RASPISTILL_DIRECTORY + filename,'rb')
         exif = extract_exif(exifread.process_file(f))    
         filedata = extract_filedata(os.stat(RASPISTILL_DIRECTORY + filename))
-        imagedata = dict(filedata.items() + exif.items())
-        imagedata['filename'] = filename
-        imagedata['image_effect'] = app_settings.image_effect
-        imagedata['exposure_mode'] = app_settings.exposure_mode
-        imagedata['awb_mode'] = app_settings.awb_mode
+        filedata.update(exif)
+        filedata['filename'] = filename
+        filedata['image_effect'] = app_settings.image_effect
+        filedata['exposure_mode'] = app_settings.exposure_mode
+        filedata['awb_mode'] = app_settings.awb_mode
         '''
         imagedata = dict()
         imagedata['filename'] = filename
@@ -223,16 +233,16 @@ def photo_view(request):
         imagedata['timestamp'] = localtime()
         imagedata['filesize'] = 100
         '''
-        picture = Picture(filename=imagedata['filename'],
-                        image_effect=imagedata['image_effect'],
-                        exposure_mode=imagedata['exposure_mode'],
-                        awb_mode=imagedata['awb_mode'],
-                        resolution=imagedata['resolution'],
-                        ISO=imagedata['ISO'],
-                        exposure_time=imagedata['exposure_time'],
-                        date=imagedata['date'],
+        picture = Picture(filename=filedata['filename'],
+                        image_effect=filedata['image_effect'],
+                        exposure_mode=filedata['exposure_mode'],
+                        awb_mode=filedata['awb_mode'],
+                        resolution=filedata['resolution'],
+                        ISO=filedata['ISO'],
+                        exposure_time=filedata['exposure_time'],
+                        date=filedata['date'],
                         timestamp='test',
-                        filesize=imagedata['filesize'])
+                        filesize=filedata['filesize'])
         DBSession.add(picture)
         return HTTPFound(location='/')  
          
@@ -394,13 +404,18 @@ def take_timelapse(filename):
                         timeEnd = timelapsedata['timeEnd'],
                     )
 
+    print('Adding timelapse to DB')
     DBSession.add(timelapse_data)
+    #DBSession.flush() 
+    transaction.commit()
+    print('Added timelapse to DB')
     with tarfile.open(TIMELAPSE_DIRECTORY + filename + '.tar.gz', "w:gz") as tar:
         tar.add(TIMELAPSE_DIRECTORY + filename, arcname=os.path.basename(TIMELAPSE_DIRECTORY + filename))
 
+    #timelapse_database = timelapse_data
     timelapse = False
     
-    return
+    return 
 
 def generate_thumbnail(filename):
     call (
@@ -431,26 +446,26 @@ def extract_filedata(st):
             
 def get_picture_data(picture):
     imagedata = dict()
-    imagedata['id'] = picture.id
+    imagedata['id'] = str(picture.id)
     imagedata['filename'] = picture.filename
     imagedata['image_effect'] = picture.image_effect
     imagedata['exposure_mode'] = picture.exposure_mode
     imagedata['awb_mode'] = picture.awb_mode
     imagedata['resolution'] = picture.resolution
-    imagedata['ISO'] = picture.ISO
+    imagedata['ISO'] = str(picture.ISO)
     imagedata['exposure_time'] = picture.exposure_time
-    imagedata['date'] = picture.date
-    imagedata['timestamp'] = picture.timestamp
-    imagedata['filesize'] = picture.filesize
+    imagedata['date'] = str(picture.date)
+    imagedata['timestamp'] = str(picture.timestamp)
+    imagedata['filesize'] = str(picture.filesize)
     return imagedata
 
 def get_timelapse_data(timelapse_rec):
     timelapse_data = dict()
-    timelapse_data['id'] = timelapse_rec.id
+    timelapse_data['id'] = str(timelapse_rec.id)
     timelapse_data['filename'] = timelapse_rec.filename
     timelapse_data['image_effect'] = timelapse_rec.image_effect
     timelapse_data['exposure_mode'] = timelapse_rec.exposure_mode
     timelapse_data['awb_mode'] = timelapse_rec.awb_mode
-    timelapse_data['timeStart'] = timelapse_rec.timeStart
-    timelapse_data['timeEnd'] = timelapse_rec.timeEnd
+    timelapse_data['timeStart'] = str(timelapse_rec.timeStart)
+    timelapse_data['timeEnd'] = str(timelapse_rec.timeEnd)
     return timelapse_data
