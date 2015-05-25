@@ -16,21 +16,25 @@ I'll provide a guide to install raspistillWeb based on the tutorial from the [py
 
 1. Make sure that your raspbian and your camera is working. Try to make a photo with raspistill to verify that your camera is working. 
 
-2. Install python2.7-dev (if not already on your system), virtualenv, setuptools and exif:
-  * `sudo apt-get install python2.7-dev python-virtualenv python-setuptools exif`
+2. Install python3-dev (if not already on your system), setuptools and exif and virtualenv via pip:
+  * `sudo apt-get install python3-dev python3-pip python3-setuptools exif`
+  * `sudo pip3 install virtualenv`
 
 3. Create a virtual environment for python (sudo not required and not recommended):
   * `mkdir ~/Development` (Or another directory)
   * `cd ~/Development`
-  * `virtualenv --no-site-packages env`
+  * `virtualenv --python=python3 env`
   * `cd env`
 
 4. Install raspistillWeb
   * `git clone https://github.com/TimJuni/raspistillWeb.git`
   * `cd raspistillWeb`
-  * `../bin/python setup.py develop`
+  * `../bin/python3 setup.py develop` (this may take some time)
 
-5. Run raspistillWeb
+5. Initialize the database
+  * `../bin/initialize_raspistillweb_db development.ini`
+
+6. Run raspistillWeb
   * `../bin/pserve development.ini`
   * surf `http://<adress of your pi>:6543`
 
