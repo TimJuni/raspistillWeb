@@ -106,7 +106,17 @@ If you want to use to raspistillWeb from the internet, you can set up an apache 
 When you surf `http://<adress of your pi>` you should be asked for a username (guest) and a password (see step 5). 
 
 ### Run raspistillWeb on startup
-TODO
+1. Create a startup script
+  * `sudo nano /etc/init.d/raspistillweb`
+```
+#!/bin/bash
+cd /home/pi/Development/env/raspistillWeb
+../bin/pserve development.ini
+``` 
+2. Make the script executable
+  `sudo chmod 755 /etc/init.d/raspistillweb`
+3. Register the script to be run at startup
+  `sudo update-rc.d /etc/init.d/raspistillweb defaults`
 
 ## Future Work
 This is my first project with python and pyramid. Feel free to leave a commend or a feature request.
